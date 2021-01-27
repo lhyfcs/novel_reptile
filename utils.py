@@ -5,8 +5,9 @@ def get_data_path():
     return os.path.join(pwd, 'data')
 
 def get_novels_path():
-    pwd = os.getcwd()
-    return os.path.join(pwd, 'novel')
+    # pwd = os.getcwd()
+    # return os.path.join(pwd, 'novel')
+    return '/Users/liujin/personal/novels'
 
 def get_novel_path(novel):
     pwd = os.getcwd()

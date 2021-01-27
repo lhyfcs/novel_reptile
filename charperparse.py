@@ -49,6 +49,8 @@ class ChaperParse:
                     context += '\n'
                 elif child.name == 'img':
                     imgUrl = child.get('src')
+                    if not imgUrl:
+                        continue
                     if self.dictJson.get(imgUrl):
                         c = self.dictJson.get(imgUrl)
                     else:
@@ -88,6 +90,9 @@ class ChaperParse:
         pageContext.sort(key=lambda c: c['index'])
         result = reduce(lambda pre, item: pre + item['context'], pageContext, '')
         novelPath = get_chaper_path(self.novelName, self.name + '_' + str(self.index) + '.txt')
-        with open(novelPath, 'w') as file:
-            file.write(result)
+        try:
+            with open(novelPath, 'w') as file:
+                file.write(result)
+        except Exception as e:
+            print('Save file exception: %s' % novelPath)
 

@@ -7,6 +7,7 @@ from utils import get_data_path, get_novels_path
 from novelparse import NovelParse
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from functools import reduce
+import numpy as np
 # Press ⌃R to execute it or replace it with your code.
 # Press Double ⇧ to search everywhere for classes, files, tool windows, actions, and settings.
 
@@ -100,6 +101,31 @@ def parseFilterNovelPages(baseUrl, prefix, name):
     with open(novelPath, 'w') as file:
         file.write(json.dumps(novels))
     # firstPage = BeautifulSoup(requests.get(baseUrl).text, 'lxml')
+
+def mergeNovelsName():
+    names = []
+    with open(os.path.join(get_data_path(), '小说.json'), 'r') as file:
+        names.extend(json.load(file))
+    names = list(filter(lambda x: '穿越重生' not in x['name'] and '近代现代' not in x['name'] and '无限流派' not in x['name'], names))
+    with open(os.path.join(get_data_path(), '小说.json'), 'w') as file:
+        file.write(json.dumps(names))
+
+    # for filename in ['完本小说.json', '连载小说.json']:
+    #     filepath = os.path.join(get_data_path(), filename)
+    #     with open(filepath, 'r') as file:
+    #         names.extend(json.load(file))
+    # names = list(filter(lambda x: 'CP' not in x['name'] and 'BL' not in x['name'] and 'NTR' not in x['name'], names))
+    # s = set()
+    # newNames = []
+    # for name in names:
+    #     if name['name'] in s:
+    #         continue
+    #     else:
+    #         newNames.append(name)
+    #         s.add(name['name'])
+    # with open(os.path.join(get_data_path(), '小说.json'), 'w') as file:
+    #     file.write(json.dumps(newNames))
+
 def mergeNovels():
     list_dirs = os.walk(get_data_path())
     novelsPath = get_novels_path()
@@ -112,7 +138,7 @@ def mergeNovels():
             for sub_root, _, files in sub_dirs:
                 for file in files:
                     file_path = os.path.join(root, d, file)
-                    index = file.split('.')[0].split('_')[-1]
+                    index = file.split('.')[-2].split('_')[-1]
                     with open(file_path, 'r') as f:
                         charpers.append({'context': f.read(), 'index': int(index)})
             charpers.sort(key=lambda x: x['index'])
@@ -123,11 +149,14 @@ def mergeNovels():
 
 # Press the green button in the gutter to run the script.
 if __name__ == '__main__':
+    # mergeNovelsName()
     # mergeNovels()
     # parseFilterNovelPages('http://www.87shuwu.info/shuku/7-lastupdate-0-1.html', 'http://www.87shuwu.info/shuku/7-lastupdate-0-', '连载小说')
     # parseFilterNovelPages('http://www.87shuwu.info/shuku/0-lastupdate-2-1.html',
     #                       'http://www.87shuwu.info/shuku/0-lastupdate-2-', '完本小说')
-
+    novels = []
+    with open(os.path.join(get_data_path(), '小说.json'), 'r') as file:
+        novels = json.load(file)
     dictPath = os.path.join(get_data_path(), 'dict.json')
     # try:
     #     with open(dictPath, 'r') as file:

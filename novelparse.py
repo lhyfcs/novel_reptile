@@ -1,10 +1,12 @@
 
-from utils import get_data_path, get_novel_path
+from utils import get_data_path, get_novel_path, get_novels_path
 import os
 import requests
 from bs4 import BeautifulSoup
 from charperparse import ChaperParse
 import json
+from functools import reduce
+import shutil
 
 class NovelParse:
     def __init__(self, webHead, novel, dictJson, charperIndex = 0):
@@ -68,7 +70,6 @@ class NovelParse:
             #     context = file.read()
             #     soupC = BeautifulSoup(context, 'lxml')
             #     self.parse_context(soupC, pageUrl)
-
             chaper = ChaperParse(self.webHead + item.get('href'), self.novel['url'], self.novel['name'], item.text, self.charperIndex, self.dictJson)
             chaper.parseCharper()
             dictPath = os.path.join(get_data_path(), 'dict.json')
@@ -86,6 +87,24 @@ class NovelParse:
             for i in range(int(firstId[1]) + 1, int(endId[1]) + 1):
                 href = format('%s_%s/' % (firstId[0], i))
                 self.parsePage(self.webHead + href, False)
+            # merge novels
+            sub_dirs = os.walk(os.path.join(get_novel_path(self.novel)))
+            charpers = []
+            for sub_root, _, files in sub_dirs:
+                for file in files:
+                    file_path = os.path.join(get_novel_path(self.novel), file)
+                    index = file.split('.')[-2].split('_')[-1]
+                    with open(file_path, 'r') as f:
+                        charpers.append({'context': f.read(), 'index': int(index)})
+                        f.close()
+                    os.remove(file_path)
+            charpers.sort(key=lambda x: x['index'])
+            result = reduce(lambda pre, item: pre + item['context'], charpers, '')
+            save_path = os.path.join(get_novels_path(), self.novel['name'] + '.txt')
+            with open(save_path, 'w') as file:
+                file.write(result)
+            # remove all temp files
+            os.removedirs(get_novel_path(self.novel))
 
 
 
