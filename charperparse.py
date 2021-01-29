@@ -7,6 +7,7 @@ from utils import get_chaper_path, get_img_save_path
 import threading
 import urllib.request
 import os
+import time
 webHead = 'http://www.87shuwu.info'
 
 class ChaperParse:
@@ -73,8 +74,24 @@ class ChaperParse:
                 print("error when parse context: " + str(e))
         return context, index
 
+    def getSoupByUrl(self, url, times):
+        try:
+            soup = BeautifulSoup(requests.get(url).text, 'lxml')
+            return soup
+        except:
+            if times > 0:
+                time.sleep(0.5)
+                return self.getSoupByUrl(url, times - 1)
+            else:
+                return None
     def parseCharper(self):
-        soup = BeautifulSoup(requests.get(self.url).text, 'lxml')
+        novelPath = get_chaper_path(self.novelName, self.name + '_' + str(self.index) + '.txt')
+        if os.path.exists(novelPath):
+            return
+        # soup = BeautifulSoup(requests.get(self.url).text, 'lxml')
+        soup = self.getSoupByUrl(self.url, 10)
+        if not soup:
+            return
         context, index = self.parseData({'url': '', 'index': 0}, soup, True)
         pageContext = [];
         pageContext.append({'index': index, 'context': context})
@@ -89,7 +106,7 @@ class ChaperParse:
             pageContext.append({'index': index, 'context': context })
         pageContext.sort(key=lambda c: c['index'])
         result = reduce(lambda pre, item: pre + item['context'], pageContext, '')
-        novelPath = get_chaper_path(self.novelName, self.name + '_' + str(self.index) + '.txt')
+
         try:
             with open(novelPath, 'w') as file:
                 file.write(result)

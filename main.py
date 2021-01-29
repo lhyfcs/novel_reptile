@@ -7,6 +7,7 @@ from utils import get_data_path, get_novels_path
 from novelparse import NovelParse
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from functools import reduce
+from multiprocessing import Pool
 import numpy as np
 # Press ⌃R to execute it or replace it with your code.
 # Press Double ⇧ to search everywhere for classes, files, tool windows, actions, and settings.
@@ -25,22 +26,26 @@ def get_novels():
             file.write(novel_html.text)
         soup = BeautifulSoup(novel_html.text, 'lxml')
 
+def parsenovel(novel, dictJson):
+    print('下载小说%s, 链接: %s' % (novel['name'], novel['url']))
+    parser = NovelParse(webHead, novel, dictJson, 0)
+    parser.parsePage(novel['url'], True)
+    print('Novel % download complete' % novel['name'])
 
 def parse_novels(novels):
+    pool = Pool(4)
+    # tempPath = os.path.join(get_data_path(), 'temp.html')
+    dictPath = os.path.join(get_data_path(), 'dict.json')
+    dictJson = {}
+    try:
+        with open(dictPath, 'r') as file:
+            dictArray = json.load(file)
+            for item in dictArray:
+                dictJson[item[0]] = item[1]
+    except Exception as e:
+        print('Read dict json file erropr: ' + str(e))
     for novel in novels:
-        print('下载小说%s, 链接: %s' % (novel['name'], novel['url']))
-        tempPath = os.path.join(get_data_path(), 'temp.html')
-        dictPath = os.path.join(get_data_path(), 'dict.json')
-        dictJson = {}
-        try:
-            with open(dictPath, 'r') as file:
-                dictArray = json.load(file)
-                for item in dictArray:
-                    dictJson[item[0]] = item[1]
-        except Exception as e:
-            print('Read dict json file erropr: ' + str(e))
-        parser = NovelParse(webHead, novel, dictJson, 0)
-        parser.parsePage(novel['url'], True)
+        pool.apply_async(parsenovel, args=(novel, dictJson))
         # with open(tempPath, 'r') as file:
         #     context = file.read()
         #     soup = BeautifulSoup(context, 'lxml')
@@ -58,6 +63,9 @@ def parse_novels(novels):
         #         href = format('%s_%s' % (firstId[0], i))
         #         print(href)
         #     print(heads)
+    pool.close()
+    pool.join()
+    print('Complete')
 
 def parseFilterNovels(pageUrl):
     headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 6.1; WOW64; rv:23.0) Gecko/20100101 Firefox/23.0'}
@@ -104,27 +112,33 @@ def parseFilterNovelPages(baseUrl, prefix, name):
 
 def mergeNovelsName():
     names = []
-    with open(os.path.join(get_data_path(), '小说.json'), 'r') as file:
-        names.extend(json.load(file))
-    names = list(filter(lambda x: '穿越重生' not in x['name'] and '近代现代' not in x['name'] and '无限流派' not in x['name'], names))
-    with open(os.path.join(get_data_path(), '小说.json'), 'w') as file:
-        file.write(json.dumps(names))
-
-    # for filename in ['完本小说.json', '连载小说.json']:
-    #     filepath = os.path.join(get_data_path(), filename)
-    #     with open(filepath, 'r') as file:
-    #         names.extend(json.load(file))
-    # names = list(filter(lambda x: 'CP' not in x['name'] and 'BL' not in x['name'] and 'NTR' not in x['name'], names))
-    # s = set()
-    # newNames = []
-    # for name in names:
-    #     if name['name'] in s:
-    #         continue
-    #     else:
-    #         newNames.append(name)
-    #         s.add(name['name'])
+    # with open(os.path.join(get_data_path(), '小说.json'), 'r') as file:
+    #     names.extend(json.load(file))
+    # names = list(filter(lambda x: '玄幻灵异' not in x['name'] and '古代架空' not in x['name'] and '网游竞技' not in x['name'], names))
     # with open(os.path.join(get_data_path(), '小说.json'), 'w') as file:
-    #     file.write(json.dumps(newNames))
+    #     file.write(json.dumps(names))
+
+    for filename in ['完本小说.json', '连载小说.json']:
+        filepath = os.path.join(get_data_path(), filename)
+        with open(filepath, 'r') as file:
+            names.extend(json.load(file))
+    def nameCheck(name):
+        removeContext = ['CP', 'BL', 'NTR', '玄幻灵异', '绿', '古代架空', '网游竞技', '妻', '穿越重生', '近代现代', '无限流派', '古代架空']
+        for item in removeContext:
+            if item in name:
+                return False
+        return True
+    names = list(filter(lambda x: nameCheck(x['name']), names))
+    s = set()
+    newNames = []
+    for name in names:
+        if name['name'] in s:
+            continue
+        else:
+            newNames.append(name)
+            s.add(name['name'])
+    with open(os.path.join(get_data_path(), '小说.json'), 'w') as file:
+        file.write(json.dumps(newNames))
 
 def mergeNovels():
     list_dirs = os.walk(get_data_path())
@@ -149,7 +163,7 @@ def mergeNovels():
 
 # Press the green button in the gutter to run the script.
 if __name__ == '__main__':
-    # mergeNovelsName()
+    mergeNovelsName()
     # mergeNovels()
     # parseFilterNovelPages('http://www.87shuwu.info/shuku/7-lastupdate-0-1.html', 'http://www.87shuwu.info/shuku/7-lastupdate-0-', '连载小说')
     # parseFilterNovelPages('http://www.87shuwu.info/shuku/0-lastupdate-2-1.html',
@@ -157,7 +171,16 @@ if __name__ == '__main__':
     novels = []
     with open(os.path.join(get_data_path(), '小说.json'), 'r') as file:
         novels = json.load(file)
-    dictPath = os.path.join(get_data_path(), 'dict.json')
+    novelBase = get_novels_path()
+    for _, _, files in os.walk(novelBase):
+        names = []
+        for file in files:
+            names.append(file.split('.')[0])
+    print('before: %d' % len(novels))
+    novels = list(
+        filter(lambda x: x['name'] not in names, novels))
+    print('end: %d' % len(novels))
+    # dictPath = os.path.join(get_data_path(), 'dict.json')
     # try:
     #     with open(dictPath, 'r') as file:
     #         dictJson = json.load(file)

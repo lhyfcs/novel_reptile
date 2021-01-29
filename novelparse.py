@@ -72,12 +72,12 @@ class NovelParse:
             #     self.parse_context(soupC, pageUrl)
             chaper = ChaperParse(self.webHead + item.get('href'), self.novel['url'], self.novel['name'], item.text, self.charperIndex, self.dictJson)
             chaper.parseCharper()
-            dictPath = os.path.join(get_data_path(), 'dict.json')
-            sortArr = sorted(self.dictJson.items(), key=lambda x: x[0])
-            sortArr = sorted(sortArr, key=lambda x: x[1])
-            with open(dictPath, 'w') as file:
-                imgDict = json.dumps(sortArr)
-                file.write(imgDict)
+            #dictPath = os.path.join(get_data_path(), 'dict.json')
+            #sortArr = sorted(self.dictJson.items(), key=lambda x: x[0])
+            #sortArr = sorted(sortArr, key=lambda x: x[1])
+            # with open(dictPath, 'w') as file:
+            #     imgDict = json.dumps(sortArr)
+            #     file.write(imgDict)
             self.charperIndex += 1
         if first:
             firstPage = soup.find('a', class_='indexPage')
