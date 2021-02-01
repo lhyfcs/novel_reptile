@@ -163,7 +163,7 @@ def mergeNovels():
 
 # Press the green button in the gutter to run the script.
 if __name__ == '__main__':
-    mergeNovelsName()
+    # mergeNovelsName()
     # mergeNovels()
     # parseFilterNovelPages('http://www.87shuwu.info/shuku/7-lastupdate-0-1.html', 'http://www.87shuwu.info/shuku/7-lastupdate-0-', '连载小说')
     # parseFilterNovelPages('http://www.87shuwu.info/shuku/0-lastupdate-2-1.html',
