@@ -30,7 +30,21 @@ def parsenovel(novel, dictJson):
     print('下载小说%s, 链接: %s' % (novel['name'], novel['url']))
     parser = NovelParse(webHead, novel, dictJson, 0)
     parser.parsePage(novel['url'], True)
-    print('Novel % download complete' % novel['name'])
+    print('Novel %s download complete' % novel['name'])
+
+def parse_novels1(novels):
+    dictPath = os.path.join(get_data_path(), 'dict.json')
+    dictJson = {}
+    try:
+        with open(dictPath, 'r') as file:
+            dictArray = json.load(file)
+            for item in dictArray:
+                dictJson[item[0]] = item[1]
+    except Exception as e:
+        print('Read dict json file erropr: ' + str(e))
+
+    for novel in novels:
+        parsenovel(novel, dictJson)
 
 def parse_novels(novels):
     pool = Pool(4)
@@ -191,6 +205,7 @@ if __name__ == '__main__':
     # except Exception as e:
     #     print('Read dict json file erropr: ' + str(e))
     parse_novels(novels)
+    # parse_novels1(novels)
     # get_novels()
 
 # See PyCharm help at https://www.jetbrains.com/help/pycharm/

@@ -7,7 +7,7 @@ from charperparse import ChaperParse
 import json
 from functools import reduce
 import shutil
-
+import time
 class NovelParse:
     def __init__(self, webHead, novel, dictJson, charperIndex = 0):
         self.novel = novel
@@ -61,7 +61,7 @@ class NovelParse:
         charpers = heads.parent.find_next_sibling('div')
         chaperlist = charpers.find_all('a')
         for item in chaperlist:
-            print('href: %s chaper name: %s' % (item.get('href'), item.text))
+            print('%s -- href: %s chaper name: %s, ' % (time.asctime(time.localtime(time.time())), item.get('href'), item.text))
             # charper = requests.get(self.webHead + item.get('href'))
             # charpPath = os.path.join(get_data_path(), 'charper.html')
             # with open(charpPath, 'w') as file:
